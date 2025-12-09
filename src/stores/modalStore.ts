@@ -10,6 +10,7 @@ export type ModalType =
   | 'success'
   | 'error'
   | 'about'
+  | 'pdf-viewer'
   | null;
 
 export type ToolType = 'extract' | 'compress' | 'watermark' | 'rotate' | null;

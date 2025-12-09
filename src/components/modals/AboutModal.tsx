@@ -94,11 +94,11 @@ export const AboutModal = () => {
         >
           <h3 className="text-sm font-semibold text-foreground mb-4">Our Team</h3>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+          <div className="flex flex-wrap justify-center gap-3 mb-6">
             {team.map((member, index) => (
               <motion.div
                 key={member.name}
-                className="p-3 rounded-xl bg-secondary/20 border border-border/50 flex items-center gap-2"
+                className="p-3 rounded-xl bg-secondary/20 border border-border/50 flex items-center gap-2 min-w-0"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 + index * 0.05 }}
@@ -106,7 +106,7 @@ export const AboutModal = () => {
                 <div className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center flex-shrink-0 glow-gold-subtle">
                   <User className="w-4 h-4 text-background" />
                 </div>
-                <span className="text-sm font-medium text-foreground truncate">
+                <span className="text-[15px] font-medium text-foreground whitespace-nowrap">
                   {member.name}
                 </span>
               </motion.div>

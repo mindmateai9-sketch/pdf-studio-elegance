@@ -59,6 +59,10 @@ export default {
           border: "hsl(var(--glass-border))",
           highlight: "hsl(var(--glass-highlight))",
         },
+        neon: {
+          cyan: "hsl(180 70% 50%)",
+          emerald: "hsl(160 70% 40%)",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

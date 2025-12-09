@@ -5,7 +5,65 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  /* Light mode */
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 7%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 43 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 7%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 43 85% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 43 85% 50%;
+
+    --radius: 0.75rem;
+
+    --gold-start: 43 85% 55%;
+    --gold-end: 40 56% 45%;
+    --charcoal: 0 0% 7%;
+    --mist: 0 0% 98%;
+    --mid-gray: 0 0% 50%;
+    --soft-blue: 214 100% 60%;
+
+    --glass-bg: 0 0% 0% / 0.03;
+    --glass-border: 0 0% 0% / 0.08;
+    --glass-highlight: 43 85% 50% / 0.1;
+
+    --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 40px rgba(210, 166, 61, 0.1);
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 7%;
+    --sidebar-primary: 43 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 0 0% 7%;
+    --sidebar-border: 0 0% 85%;
+    --sidebar-ring: 43 85% 50%;
+  }
+
+  /* Dark mode (default) */
+  :root,
+  .dark {
     --background: 0 0% 7%;
     --foreground: 0 0% 98%;
 
@@ -43,6 +101,10 @@
     --mist: 0 0% 98%;
     --mid-gray: 0 0% 70%;
     --soft-blue: 214 100% 76%;
+    
+    /* Neon accents for dark mode */
+    --neon-cyan: 180 70% 50%;
+    --neon-emerald: 160 70% 40%;
 
     /* Glass effects */
     --glass-bg: 0 0% 100% / 0.06;
@@ -180,4 +242,39 @@
   .page-thumbnail:hover:not(.selected) {
     @apply border-muted-foreground/30;
   }
+}
+
+/* Custom scrollbar styling */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+  border-radius: 9999px;
+  transition: background 0.2s;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.4);
+}
+
+/* Neon glow utilities for dark mode */
+.dark .neon-glow {
+  box-shadow: 
+    0 0 20px hsl(var(--neon-cyan) / 0.3),
+    0 0 40px hsl(var(--neon-cyan) / 0.2),
+    0 0 60px hsl(var(--neon-cyan) / 0.1);
+}
+
+.dark .neon-glow-emerald {
+  box-shadow: 
+    0 0 20px hsl(var(--neon-emerald) / 0.3),
+    0 0 40px hsl(var(--neon-emerald) / 0.2);
 }
