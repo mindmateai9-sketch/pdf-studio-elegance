@@ -1,10 +1,14 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Scissors, Minimize2, Droplets, RotateCw } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ToolCard } from '@/components/ToolCard';
 import { ModalController } from '@/components/ModalController';
+import { ParticleBackground } from '@/components/ParticleBackground';
+import { PDFViewer } from '@/components/PDFViewer';
 import { useModalStore } from '@/stores/modalStore';
+import { useThemeStore } from '@/stores/themeStore';
+import { useEffect } from 'react';
 
 const tools = [
   {
@@ -34,17 +38,55 @@ const tools = [
 ];
 
 const Index = () => {
-  const openModal = useModalStore((state) => state.openModal);
+  const { openModal, modalType, file, closeModal, toolType } = useModalStore();
+  const { theme, setTheme } = useThemeStore();
+
+  // Initialize theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('pdf-studio-theme');
+    if (savedTheme) {
+      try {
+        const parsed = JSON.parse(savedTheme);
+        if (parsed.state?.theme) {
+          setTheme(parsed.state.theme);
+        }
+      } catch {
+        setTheme('dark');
+      }
+    } else {
+      setTheme('dark');
+    }
+  }, [setTheme]);
 
   const handleToolClick = (toolId: 'extract' | 'compress' | 'watermark' | 'rotate') => {
     openModal('upload', toolId);
   };
 
+  const handlePDFViewerClose = () => {
+    closeModal();
+  };
+
+  const handlePDFViewerContinue = () => {
+    // Continue to the appropriate modal based on tool type
+    if (toolType === 'extract') {
+      openModal('page-select', toolType);
+    } else if (toolType === 'compress') {
+      openModal('compress-options', toolType);
+    } else if (toolType === 'watermark') {
+      openModal('watermark', toolType);
+    } else if (toolType === 'rotate') {
+      openModal('rotate', toolType);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background relative">
+      {/* Particle background for dark mode */}
+      <ParticleBackground />
+      
       <Header />
       
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-16 relative z-10">
         {/* Hero Section */}
         <section className="py-20 md:py-32">
           <div className="container mx-auto px-6">
@@ -149,6 +191,17 @@ const Index = () => {
 
       <Footer />
       <ModalController />
+      
+      {/* PDF Viewer overlay */}
+      <AnimatePresence>
+        {modalType === 'pdf-viewer' && file && (
+          <PDFViewer 
+            file={file} 
+            onClose={handlePDFViewerClose}
+            onContinue={handlePDFViewerContinue}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

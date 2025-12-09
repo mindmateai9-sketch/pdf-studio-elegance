@@ -41,20 +41,8 @@ export const UploadModal = () => {
       setFile(selectedFile);
       setSelectedFile(null);
       
-      switch (toolType) {
-        case 'extract':
-          openModal('page-select', toolType);
-          break;
-        case 'compress':
-          openModal('compress-options', toolType);
-          break;
-        case 'watermark':
-          openModal('watermark', toolType);
-          break;
-        case 'rotate':
-          openModal('rotate', toolType);
-          break;
-      }
+      // Open PDF viewer first
+      openModal('pdf-viewer', toolType);
     }
   }, [selectedFile, toolType, setFile, openModal]);
 
