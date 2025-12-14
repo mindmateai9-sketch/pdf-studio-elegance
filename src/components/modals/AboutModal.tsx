@@ -1,15 +1,7 @@
 import { motion } from 'framer-motion';
-import { User, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Modal } from './Modal';
 import { useModalStore } from '@/stores/modalStore';
-
-const team = [
-  { name: 'Aditya' },
-  { name: 'Anusha' },
-  { name: 'Janardhan' },
-  { name: 'Gopala Krishna' },
-  { name: 'Subrahmanyam' },
-];
 
 export const AboutModal = () => {
   const { modalType, closeModal } = useModalStore();
@@ -73,46 +65,24 @@ export const AboutModal = () => {
         </motion.p>
 
         <motion.div
-          className="p-5 rounded-xl bg-secondary/30 border border-border text-left mb-6"
+          className="p-5 rounded-xl bg-secondary/30 border border-border text-center mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Eldora Technologies is a student-driven startup building modern software products 
-            with cinematic UI aesthetics and clean engineering principles. We create SaaS tools, 
-            PDF toolkits, web automation utilities, and data analytics solutions designed to 
-            integrate seamlessly into large-scale workflows for enterprises and developers. 
-            Our mission is to make premium UI accessible to everyone.
+            Eldora Technologies is building modern software products.
           </p>
         </motion.div>
 
-        <motion.div
+        <motion.h3
+          className="text-sm font-semibold text-foreground mb-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <h3 className="text-sm font-semibold text-foreground mb-4">Our Team</h3>
-          
-          <div className="flex flex-wrap justify-center gap-3 mb-6">
-            {team.map((member, index) => (
-              <motion.div
-                key={member.name}
-                className="p-3 rounded-xl bg-secondary/20 border border-border/50 flex items-center gap-2 min-w-0"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.5 + index * 0.05 }}
-              >
-                <div className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center flex-shrink-0 glow-gold-subtle">
-                  <User className="w-4 h-4 text-background" />
-                </div>
-                <span className="text-[15px] font-medium text-foreground whitespace-nowrap">
-                  {member.name}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+          Contact
+        </motion.h3>
 
         <motion.div
           className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6"
