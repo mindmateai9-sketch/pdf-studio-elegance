@@ -87,26 +87,35 @@ export async function addWatermark(
     fontSize: number;
     opacity: number;
     rotation: number;
-  }
+  },
+  pageNumbers?: number[]
 ): Promise<Blob> {
   const arrayBuffer = await file.arrayBuffer();
   const pdfDoc = await PDFDocument.load(arrayBuffer);
   const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const pages = pdfDoc.getPages();
 
-  for (const page of pages) {
-    const { width, height } = page.getSize();
-    const textWidth = font.widthOfTextAtSize(config.text, config.fontSize);
+  // If pageNumbers provided, only watermark those pages
+  const pagesToWatermark = pageNumbers 
+    ? pageNumbers.map(n => n - 1) 
+    : pages.map((_, i) => i);
 
-    page.drawText(config.text, {
-      x: (width - textWidth) / 2,
-      y: height / 2,
-      size: config.fontSize,
-      font,
-      color: rgb(0.5, 0.5, 0.5),
-      opacity: config.opacity,
-      rotate: degrees(config.rotation),
-    });
+  for (const pageIndex of pagesToWatermark) {
+    const page = pages[pageIndex];
+    if (page) {
+      const { width, height } = page.getSize();
+      const textWidth = font.widthOfTextAtSize(config.text, config.fontSize);
+
+      page.drawText(config.text, {
+        x: (width - textWidth) / 2,
+        y: height / 2,
+        size: config.fontSize,
+        font,
+        color: rgb(0.5, 0.5, 0.5),
+        opacity: config.opacity,
+        rotate: degrees(config.rotation),
+      });
+    }
   }
 
   const pdfBytes = await pdfDoc.save();

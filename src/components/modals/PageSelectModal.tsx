@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Check } from 'lucide-react';
+import { Check, Expand } from 'lucide-react';
 import { Modal } from './Modal';
+import { PagePreviewModal } from './PagePreviewModal';
 import { useModalStore } from '@/stores/modalStore';
 import { getPdfPageCount, generatePagePreviews, extractPages } from '@/lib/pdfUtils';
 
@@ -23,6 +24,7 @@ export const PageSelectModal = () => {
 
   const [rangeInput, setRangeInput] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [previewPage, setPreviewPage] = useState<number | null>(null);
 
   useEffect(() => {
     const loadPdfInfo = async () => {
@@ -32,7 +34,7 @@ export const PageSelectModal = () => {
           const pageCount = await getPdfPageCount(file);
           setTotalPages(pageCount);
           
-          const previews = await generatePagePreviews(file, Math.min(pageCount, 20));
+          const previews = await generatePagePreviews(file, Math.min(pageCount, 50));
           setPagePreviews(previews);
         } catch (error) {
           console.error('Failed to load PDF:', error);
@@ -84,7 +86,8 @@ export const PageSelectModal = () => {
   );
 
   const togglePage = useCallback(
-    (page: number) => {
+    (page: number, e: React.MouseEvent) => {
+      e.stopPropagation();
       setSelectedPages(
         selectedPages.includes(page)
           ? selectedPages.filter((p) => p !== page)
@@ -94,6 +97,10 @@ export const PageSelectModal = () => {
     },
     [selectedPages, setSelectedPages]
   );
+
+  const handlePageClick = useCallback((page: number) => {
+    setPreviewPage(page);
+  }, []);
 
   const selectAll = useCallback(() => {
     const allPages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -119,104 +126,128 @@ export const PageSelectModal = () => {
   }, [file, selectedPages, openModal, setProcessedBlob, setError]);
 
   return (
-    <Modal
-      open={modalType === 'page-select'}
-      onClose={closeModal}
-      title="Select Pages"
-      subtitle={`Choose which pages to extract from your ${totalPages}-page PDF`}
-      size="lg"
-    >
-      <div className="space-y-4">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={rangeInput}
-            onChange={handleRangeChange}
-            placeholder="e.g., 1-5, 9, 11-13"
-            className="flex-1 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
-          />
-          <motion.button
-            onClick={selectAll}
-            className="px-4 py-3 rounded-xl text-sm font-medium bg-secondary/50 border border-border hover:border-primary/30 transition-colors"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Select All
-          </motion.button>
-        </div>
+    <>
+      <Modal
+        open={modalType === 'page-select'}
+        onClose={closeModal}
+        title="Select Pages"
+        subtitle={`Choose which pages to extract from your ${totalPages}-page PDF`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={rangeInput}
+              onChange={handleRangeChange}
+              placeholder="e.g., 1-5, 9, 11-13"
+              className="flex-1 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+            />
+            <motion.button
+              onClick={selectAll}
+              className="px-4 py-3 rounded-xl text-sm font-medium bg-secondary/50 border border-border hover:border-primary/30 transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Select All
+            </motion.button>
+          </div>
 
-        <div className="max-h-64 overflow-x-auto py-2">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-            </div>
-          ) : (
-            <div className="flex gap-3 pb-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <motion.div
-                  key={page}
-                  className={`page-thumbnail flex-shrink-0 ${
-                    selectedPages.includes(page) ? 'selected' : ''
-                  }`}
-                  onClick={() => togglePage(page)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <div className="w-16 h-20 bg-secondary/50 flex items-center justify-center relative">
-                    {pagePreviews[page - 1] ? (
-                      <img
-                        src={pagePreviews[page - 1]}
-                        alt={`Page ${page}`}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{page}</span>
-                    )}
-                    
-                    {selectedPages.includes(page) && (
+          <div className="max-h-64 overflow-x-auto py-2">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            ) : (
+              <div className="flex gap-3 pb-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <motion.div
+                    key={page}
+                    className={`page-thumbnail flex-shrink-0 cursor-pointer group ${
+                      selectedPages.includes(page) ? 'selected' : ''
+                    }`}
+                    onClick={() => handlePageClick(page)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="w-16 h-20 bg-secondary/50 flex items-center justify-center relative rounded-lg overflow-hidden">
+                      {pagePreviews[page - 1] ? (
+                        <img
+                          src={pagePreviews[page - 1]}
+                          alt={`Page ${page}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{page}</span>
+                      )}
+                      
+                      {/* Expand icon on hover */}
                       <motion.div
-                        className="absolute inset-0 bg-primary/20 flex items-center justify-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 bg-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        initial={false}
                       >
-                        <div className="w-6 h-6 rounded-full gradient-gold flex items-center justify-center">
-                          <Check className="w-4 h-4 text-background" />
-                        </div>
+                        <Expand className="w-4 h-4 text-foreground" />
                       </motion.div>
-                    )}
-                  </div>
-                  <p className="text-xs text-center text-muted-foreground mt-1">{page}</p>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
+                      
+                      {/* Selection checkbox */}
+                      <motion.button
+                        className={`absolute top-1 right-1 w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                          selectedPages.includes(page)
+                            ? 'gradient-gold'
+                            : 'bg-background/80 border border-border hover:border-primary/50'
+                        }`}
+                        onClick={(e) => togglePage(page, e)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        {selectedPages.includes(page) && (
+                          <Check className="w-3 h-3 text-background" />
+                        )}
+                      </motion.button>
+                    </div>
+                    <p className="text-xs text-center text-muted-foreground mt-1">{page}</p>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <p className="text-sm text-muted-foreground">
-          {selectedPages.length} of {totalPages} pages selected
-        </p>
+          <p className="text-sm text-muted-foreground">
+            {selectedPages.length} of {totalPages} pages selected • Click thumbnail to preview
+          </p>
 
-        <div className="flex gap-3 pt-2">
-          <motion.button
-            className="btn-secondary flex-1"
-            onClick={() => openModal('upload', 'extract')}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            Back
-          </motion.button>
-          
-          <motion.button
-            className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleExtract}
-            disabled={selectedPages.length === 0}
-            whileHover={selectedPages.length > 0 ? { scale: 1.02 } : {}}
-            whileTap={selectedPages.length > 0 ? { scale: 0.98 } : {}}
-          >
-            Extract {selectedPages.length} Pages
-          </motion.button>
+          <div className="flex gap-3 pt-2">
+            <motion.button
+              className="btn-secondary flex-1"
+              onClick={() => openModal('upload', 'extract')}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              Back
+            </motion.button>
+            
+            <motion.button
+              className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleExtract}
+              disabled={selectedPages.length === 0}
+              whileHover={selectedPages.length > 0 ? { scale: 1.02 } : {}}
+              whileTap={selectedPages.length > 0 ? { scale: 0.98 } : {}}
+            >
+              Extract {selectedPages.length} Pages
+            </motion.button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {/* Page Preview Modal */}
+      <PagePreviewModal
+        open={previewPage !== null}
+        onClose={() => setPreviewPage(null)}
+        currentPage={previewPage || 1}
+        totalPages={totalPages}
+        pagePreviews={pagePreviews}
+        onPageChange={setPreviewPage}
+      />
+    </>
   );
 };
