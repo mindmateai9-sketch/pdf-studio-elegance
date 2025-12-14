@@ -26,6 +26,7 @@ export const RotateModal = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [previewPage, setPreviewPage] = useState<number | null>(null);
+  const [rangeInput, setRangeInput] = useState('');
 
   useEffect(() => {
     const loadPdfInfo = async () => {
@@ -73,6 +74,42 @@ export const RotateModal = () => {
     }
   }, [file, rotateConfig, totalPages, selectedPages, openModal, setProcessedBlob, setError]);
 
+  const parseRange = useCallback((input: string): number[] => {
+    const pages: Set<number> = new Set();
+    const parts = input.split(',').map((s) => s.trim());
+
+    for (const part of parts) {
+      if (part.includes('-')) {
+        const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10));
+        if (!isNaN(start) && !isNaN(end)) {
+          for (let i = Math.max(1, start); i <= Math.min(totalPages, end); i++) {
+            pages.add(i);
+          }
+        }
+      } else {
+        const num = parseInt(part, 10);
+        if (!isNaN(num) && num >= 1 && num <= totalPages) {
+          pages.add(num);
+        }
+      }
+    }
+
+    return Array.from(pages).sort((a, b) => a - b);
+  }, [totalPages]);
+
+  const handleRangeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setRangeInput(value);
+      
+      if (value.trim()) {
+        const pages = parseRange(value);
+        setSelectedPages(pages);
+      }
+    },
+    [parseRange, setSelectedPages]
+  );
+
   const togglePage = useCallback(
     (page: number, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -81,6 +118,7 @@ export const RotateModal = () => {
           ? selectedPages.filter((p) => p !== page)
           : [...selectedPages, page].sort((a, b) => a - b)
       );
+      setRangeInput('');
     },
     [selectedPages, setSelectedPages]
   );
@@ -92,6 +130,7 @@ export const RotateModal = () => {
   const selectAll = useCallback(() => {
     const allPages = Array.from({ length: totalPages }, (_, i) => i + 1);
     setSelectedPages(allPages);
+    setRangeInput(`1-${totalPages}`);
   }, [totalPages, setSelectedPages]);
 
   return (
@@ -189,23 +228,29 @@ export const RotateModal = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
+              className="space-y-4"
             >
-              <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-foreground">
-                  Select Pages
-                </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={rangeInput}
+                  onChange={handleRangeChange}
+                  placeholder="e.g., 1-5, 9, 11-13"
+                  className="flex-1 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+                />
                 <motion.button
                   onClick={selectAll}
-                  className="text-xs text-primary hover:underline"
+                  className="px-4 py-3 rounded-xl text-sm font-medium bg-secondary/50 border border-border hover:border-primary/30 transition-colors"
                   whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Select All
                 </motion.button>
               </div>
               
-              <div className="max-h-48 overflow-x-auto py-2">
+              <div className="max-h-64 overflow-x-auto py-2">
                 {isLoading ? (
-                  <div className="flex items-center justify-center h-24">
+                  <div className="flex items-center justify-center h-32">
                     <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                   </div>
                 ) : (
@@ -220,7 +265,7 @@ export const RotateModal = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <div className="w-14 h-18 bg-secondary/50 flex items-center justify-center relative rounded-lg overflow-hidden">
+                        <div className="w-16 h-20 bg-secondary/50 flex items-center justify-center relative rounded-lg overflow-hidden">
                           {pagePreviews[page - 1] ? (
                             <img
                               src={pagePreviews[page - 1]}
@@ -236,12 +281,12 @@ export const RotateModal = () => {
                             className="absolute inset-0 bg-background/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                             initial={false}
                           >
-                            <Expand className="w-3 h-3 text-foreground" />
+                            <Expand className="w-4 h-4 text-foreground" />
                           </motion.div>
                           
                           {/* Selection checkbox */}
                           <motion.button
-                            className={`absolute top-1 right-1 w-4 h-4 rounded flex items-center justify-center transition-all ${
+                            className={`absolute top-1 right-1 w-5 h-5 rounded-md flex items-center justify-center transition-all ${
                               selectedPages.includes(page)
                                 ? 'gradient-gold'
                                 : 'bg-background/80 border border-border hover:border-primary/50'
@@ -251,7 +296,7 @@ export const RotateModal = () => {
                             whileTap={{ scale: 0.9 }}
                           >
                             {selectedPages.includes(page) && (
-                              <Check className="w-2.5 h-2.5 text-background" />
+                              <Check className="w-3 h-3 text-background" />
                             )}
                           </motion.button>
                         </div>
@@ -261,6 +306,10 @@ export const RotateModal = () => {
                   </div>
                 )}
               </div>
+
+              <p className="text-sm text-muted-foreground">
+                {selectedPages.length} of {totalPages} pages selected • Click thumbnail to preview
+              </p>
             </motion.div>
           )}
 
