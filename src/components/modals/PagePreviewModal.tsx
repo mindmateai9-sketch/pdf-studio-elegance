@@ -175,7 +175,7 @@ export const PagePreviewModal = ({
                     transformOrigin: 'center center',
                   }}
                 >
-                  {pagePreviews[currentPage - 1] ? (
+                  {pagePreviews[currentPage - 1] && pagePreviews[currentPage - 1].length > 0 ? (
                     <img
                       src={pagePreviews[currentPage - 1]}
                       alt={`Page ${currentPage}`}
@@ -184,7 +184,9 @@ export const PagePreviewModal = ({
                     />
                   ) : (
                     <div className="w-64 h-80 bg-secondary flex items-center justify-center">
-                      <span className="text-muted-foreground">Loading...</span>
+                      <span className="text-muted-foreground">
+                        {currentPage > pagePreviews.length ? 'Preview not available for this page' : 'Loading...'}
+                      </span>
                     </div>
                   )}
                 </motion.div>

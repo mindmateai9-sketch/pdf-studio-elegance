@@ -113,7 +113,7 @@ export async function addWatermark(
         font,
         color: rgb(0.5, 0.5, 0.5),
         opacity: config.opacity,
-        rotate: degrees(config.rotation),
+        rotate: degrees(-config.rotation), // Invert rotation for correct visual direction
       });
     }
   }
