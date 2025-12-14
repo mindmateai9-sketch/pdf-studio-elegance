@@ -1,11 +1,10 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Scissors, Minimize2, Droplets, RotateCw } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { ToolCard } from '@/components/ToolCard';
 import { ModalController } from '@/components/ModalController';
 import { ParticleBackground } from '@/components/ParticleBackground';
-import { PDFViewer } from '@/components/PDFViewer';
 import { useModalStore } from '@/stores/modalStore';
 import { useThemeStore } from '@/stores/themeStore';
 import { useEffect } from 'react';
@@ -38,8 +37,8 @@ const tools = [
 ];
 
 const Index = () => {
-  const { openModal, modalType, file, closeModal, toolType } = useModalStore();
-  const { theme, setTheme } = useThemeStore();
+  const { openModal } = useModalStore();
+  const { setTheme } = useThemeStore();
 
   // Initialize theme on mount
   useEffect(() => {
@@ -60,23 +59,6 @@ const Index = () => {
 
   const handleToolClick = (toolId: 'extract' | 'compress' | 'watermark' | 'rotate') => {
     openModal('upload', toolId);
-  };
-
-  const handlePDFViewerClose = () => {
-    closeModal();
-  };
-
-  const handlePDFViewerContinue = () => {
-    // Continue to the appropriate modal based on tool type
-    if (toolType === 'extract') {
-      openModal('page-select', toolType);
-    } else if (toolType === 'compress') {
-      openModal('compress-options', toolType);
-    } else if (toolType === 'watermark') {
-      openModal('watermark', toolType);
-    } else if (toolType === 'rotate') {
-      openModal('rotate', toolType);
-    }
   };
 
   return (
@@ -191,17 +173,6 @@ const Index = () => {
 
       <Footer />
       <ModalController />
-      
-      {/* PDF Viewer overlay */}
-      <AnimatePresence>
-        {modalType === 'pdf-viewer' && file && (
-          <PDFViewer 
-            file={file} 
-            onClose={handlePDFViewerClose}
-            onContinue={handlePDFViewerContinue}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -41,10 +41,25 @@ export const UploadModal = () => {
       setFile(selectedFile);
       setSelectedFile(null);
       
-      // Open PDF viewer first
-      openModal('pdf-viewer', toolType);
+      // Go directly to the tool-specific modal
+      switch (toolType) {
+        case 'extract':
+          openModal('page-select', toolType);
+          break;
+        case 'compress':
+          openModal('compress-options', toolType);
+          break;
+        case 'watermark':
+          openModal('watermark', toolType);
+          break;
+        case 'rotate':
+          openModal('rotate', toolType);
+          break;
+        default:
+          closeModal();
+      }
     }
-  }, [selectedFile, toolType, setFile, openModal]);
+  }, [selectedFile, toolType, setFile, openModal, closeModal]);
 
   const handleRemoveFile = useCallback(() => {
     setSelectedFile(null);
