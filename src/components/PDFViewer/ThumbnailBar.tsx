@@ -1,5 +1,5 @@
-import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useRef, memo, useCallback } from 'react';
+import { usePerformanceSettings } from '@/hooks/use-performance';
 
 interface ThumbnailBarProps {
   previews: string[];
@@ -7,97 +7,80 @@ interface ThumbnailBarProps {
   onPageSelect: (page: number) => void;
 }
 
-const Thumbnail = ({ 
+// Memoized Thumbnail component - no Framer Motion, uses CSS transforms
+const Thumbnail = memo(({ 
   src, 
   index, 
   isActive, 
-  onClick 
+  onClick,
+  shouldAnimate
 }: { 
   src: string; 
   index: number; 
   isActive: boolean; 
   onClick: () => void;
+  shouldAnimate: boolean;
 }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [hover, setHover] = useState(false);
-  
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  
-  const rotateX = useTransform(y, [-50, 50], [10, -10]);
-  const rotateY = useTransform(x, [-50, 50], [-10, 10]);
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    x.set(e.clientX - centerX);
-    y.set(e.clientY - centerY);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-    setHover(false);
-  };
-
   return (
-    <motion.div
-      ref={ref}
-      className={`relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
+    <div
+      className={`relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden transition-transform duration-200 ${
         isActive 
-          ? 'ring-2 ring-primary shadow-lg shadow-primary/20' 
-          : 'ring-1 ring-border/50 hover:ring-primary/50'
+          ? 'ring-2 ring-primary shadow-lg shadow-primary/20 scale-105' 
+          : 'ring-1 ring-border/50 hover:ring-primary/50 hover:scale-105'
       }`}
-      style={{
-        perspective: 1000,
-        rotateX: hover ? rotateX : 0,
-        rotateY: hover ? rotateY : 0,
-      }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      whileHover={{ scale: 1.05, zIndex: 10 }}
-      whileTap={{ scale: 0.98 }}
+      style={{
+        // CSS transforms instead of JS-based animations
+        transform: isActive ? 'scale(1.05)' : undefined,
+        transition: shouldAnimate ? 'transform 0.2s ease-out, box-shadow 0.2s ease-out' : 'none',
+      }}
     >
+      {/* Image stays mounted, no lazy loading inside modal */}
       <img 
         src={src} 
         alt={`Page ${index + 1}`}
         className="w-16 h-20 object-cover"
+        loading="eager"
+        decoding="async"
       />
       
       {/* Page number badge */}
       <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 text-xs font-medium px-1.5 py-0.5 rounded ${
         isActive 
           ? 'bg-primary text-primary-foreground' 
-          : 'bg-background/80 text-foreground backdrop-blur-sm'
+          : 'bg-background/80 text-foreground'
       }`}>
         {index + 1}
       </div>
 
-      {/* Glow effect for active */}
+      {/* Glow effect for active - CSS only */}
       {isActive && (
-        <motion.div
+        <div
           className="absolute inset-0 pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
           style={{
             boxShadow: 'inset 0 0 20px hsl(var(--primary) / 0.3)',
           }}
         />
       )}
-    </motion.div>
+    </div>
   );
-};
+});
 
-export const ThumbnailBar = ({ previews, currentPage, onPageSelect }: ThumbnailBarProps) => {
+Thumbnail.displayName = 'Thumbnail';
+
+// Memoized ThumbnailBar component
+export const ThumbnailBar = memo(({ previews, currentPage, onPageSelect }: ThumbnailBarProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { shouldAnimate } = usePerformanceSettings();
+
+  // Memoized callback to prevent re-renders
+  const handlePageSelect = useCallback((index: number) => {
+    onPageSelect(index);
+  }, [onPageSelect]);
 
   return (
     <div className="relative w-full">
-      {/* Custom scrollbar container */}
+      {/* Custom scrollbar container with passive scroll listener */}
       <div 
         ref={scrollRef}
         className="flex gap-3 overflow-x-auto py-3 px-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-primary/50 hover:scrollbar-thumb-primary"
@@ -112,7 +95,8 @@ export const ThumbnailBar = ({ previews, currentPage, onPageSelect }: ThumbnailB
             src={preview}
             index={index}
             isActive={currentPage === index}
-            onClick={() => onPageSelect(index)}
+            onClick={() => handlePageSelect(index)}
+            shouldAnimate={shouldAnimate}
           />
         ))}
       </div>
@@ -122,4 +106,6 @@ export const ThumbnailBar = ({ previews, currentPage, onPageSelect }: ThumbnailB
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent pointer-events-none" />
     </div>
   );
-};
+});
+
+ThumbnailBar.displayName = 'ThumbnailBar';
