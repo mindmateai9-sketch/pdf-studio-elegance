@@ -1,6 +1,7 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { usePerformanceSettings } from '@/hooks/use-performance';
 
 interface ModalProps {
   open: boolean;
@@ -13,7 +14,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export const Modal = ({
+// Modal component - Framer Motion allowed here per requirements
+export const Modal = memo(({
   open,
   onClose,
   title,
@@ -23,6 +25,8 @@ export const Modal = ({
   preventClose = false,
   size = 'md',
 }: ModalProps) => {
+  const { prefersReducedMotion, shouldUseBlur } = usePerformanceSettings();
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !preventClose) {
@@ -34,7 +38,7 @@ export const Modal = ({
 
   useEffect(() => {
     if (open) {
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('keydown', handleKeyDown, { passive: true });
       document.body.style.overflow = 'hidden';
     }
     return () => {
@@ -49,27 +53,47 @@ export const Modal = ({
     lg: 'max-w-lg',
   };
 
+  // Animation variants - disabled when reduced motion is preferred
+  const overlayVariants = prefersReducedMotion 
+    ? { initial: {}, animate: {}, exit: {} }
+    : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
+  const containerVariants = prefersReducedMotion
+    ? { initial: {}, animate: {}, exit: {} }
+    : {
+        initial: { opacity: 0, scale: 0.96, y: 10 },
+        animate: { opacity: 1, scale: 1, y: 0 },
+        exit: { opacity: 0, scale: 0.96, y: 10 },
+      };
+
   return (
     <AnimatePresence>
       {open && (
-        <div className="modal-overlay" onClick={preventClose ? undefined : onClose}>
+        <motion.div
+          className={`modal-overlay ${shouldUseBlur ? '' : 'modal-overlay-no-blur'}`}
+          onClick={preventClose ? undefined : onClose}
+          variants={overlayVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.2 }}
+        >
           <motion.div
             className={`modal-container ${sizeClasses[size]}`}
             onClick={(e) => e.stopPropagation()}
-            initial={{ opacity: 0, scale: 0.96, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 10 }}
-            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+            variants={containerVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: prefersReducedMotion ? 0 : 0.22, ease: [0.4, 0, 0.2, 1] }}
           >
             {showClose && !preventClose && (
-              <motion.button
+              <button
                 className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
                 onClick={onClose}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
               >
                 <X className="w-5 h-5" />
-              </motion.button>
+              </button>
             )}
 
             {(title || subtitle) && (
@@ -85,8 +109,10 @@ export const Modal = ({
 
             {children}
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
-};
+});
+
+Modal.displayName = 'Modal';

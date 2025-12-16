@@ -1,12 +1,15 @@
-import { motion } from 'framer-motion';
+import { memo } from 'react';
+import { usePerformanceSettings } from '@/hooks/use-performance';
 
-export const Footer = () => {
+export const Footer = memo(() => {
+  const { shouldAnimate } = usePerformanceSettings();
+
   return (
-    <motion.footer 
+    <footer 
       className="border-t border-border/50 py-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.8 }}
+      style={{
+        animation: shouldAnimate ? 'fade-in 0.5s ease-out 0.8s both' : 'none',
+      }}
     >
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
@@ -20,6 +23,8 @@ export const Footer = () => {
           </p>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
-};
+});
+
+Footer.displayName = 'Footer';

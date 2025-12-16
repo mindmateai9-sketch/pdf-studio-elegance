@@ -143,13 +143,26 @@
 
 @layer utilities {
   .glass {
-    @apply bg-glass-bg backdrop-blur-xl border border-glass-border;
+    @apply bg-glass-bg border border-glass-border;
+  }
+  
+  /* Enable backdrop blur only on desktop */
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .glass {
+      @apply backdrop-blur-xl;
+    }
   }
 
   .glass-gold {
-    @apply bg-glass-bg backdrop-blur-xl;
+    @apply bg-glass-bg;
     border: 1px solid hsl(var(--glass-border));
     box-shadow: inset 0 1px 0 0 hsl(var(--glass-highlight));
+  }
+  
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .glass-gold {
+      @apply backdrop-blur-xl;
+    }
   }
 
   .gradient-gold {
@@ -196,10 +209,18 @@
   }
 
   .tool-card {
-    @apply relative overflow-hidden rounded-2xl p-6 transition-all duration-300 cursor-pointer;
+    @apply relative overflow-hidden rounded-2xl p-6 cursor-pointer;
     background: hsl(var(--glass-bg));
-    backdrop-filter: blur(20px);
     border: 1px solid hsl(var(--glass-border));
+    /* CSS transform instead of JS for hover */
+    transition: transform 0.3s ease-out, border-color 0.3s ease-out, box-shadow 0.3s ease-out;
+  }
+  
+  /* Disable backdrop blur on mobile */
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .tool-card {
+      backdrop-filter: blur(20px);
+    }
   }
 
   .tool-card:hover {
@@ -207,11 +228,28 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 40px rgba(242, 206, 105, 0.08);
     transform: translateY(-4px);
   }
+  
+  /* Respect reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    .tool-card:hover {
+      transform: none;
+    }
+  }
 
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center p-4;
     background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
+  }
+  
+  /* Enable backdrop blur on modal overlay only on desktop */
+  @media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .modal-overlay {
+      backdrop-filter: blur(8px);
+    }
+  }
+  
+  .modal-overlay-no-blur {
+    backdrop-filter: none !important;
   }
 
   .modal-container {
@@ -277,4 +315,87 @@
   box-shadow: 
     0 0 20px hsl(var(--neon-emerald) / 0.3),
     0 0 40px hsl(var(--neon-emerald) / 0.2);
+}
+
+/* CSS Animations for particles - replaces Framer Motion */
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-30px) translateX(10px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes ambient-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+}
+
+@keyframes ambient-pulse-alt {
+  0%, 100% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.particle-float {
+  animation: particle-float ease-in-out infinite;
+}
+
+.ambient-pulse {
+  animation: ambient-pulse 8s ease-in-out infinite;
+}
+
+.ambient-pulse-alt {
+  animation: ambient-pulse-alt 10s ease-in-out infinite;
+}
+
+/* Disable all custom animations when reduced motion is preferred */
+@media (prefers-reduced-motion: reduce) {
+  .particle-float,
+  .ambient-pulse,
+  .ambient-pulse-alt {
+    animation: none !important;
+  }
+  
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

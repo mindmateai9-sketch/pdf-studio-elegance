@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
+import { memo } from 'react';
 import { LucideIcon } from 'lucide-react';
+import { usePerformanceSettings } from '@/hooks/use-performance';
 
 interface ToolCardProps {
   title: string;
@@ -9,18 +10,22 @@ interface ToolCardProps {
   delay?: number;
 }
 
-export const ToolCard = ({ title, description, icon: Icon, onClick, delay = 0 }: ToolCardProps) => {
+// Memoized component to prevent unnecessary re-renders
+export const ToolCard = memo(({ title, description, icon: Icon, onClick, delay = 0 }: ToolCardProps) => {
+  const { shouldAnimate } = usePerformanceSettings();
+
   return (
-    <motion.div
+    <div
       className="tool-card group"
       onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      style={{
+        // CSS-based animation instead of Framer Motion
+        animation: shouldAnimate ? `fade-in 0.5s ease-out ${delay}s both` : 'none',
+        opacity: shouldAnimate ? undefined : 1,
+      }}
     >
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+      <div 
+        className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
         style={{
           background: 'radial-gradient(circle at 50% 0%, hsl(var(--primary) / 0.08), transparent 70%)'
         }}
@@ -41,12 +46,10 @@ export const ToolCard = ({ title, description, icon: Icon, onClick, delay = 0 }:
         
         <div className="mt-4 flex items-center text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <span>Get started</span>
-          <motion.svg 
-            className="w-4 h-4 ml-1"
+          <svg 
+            className="w-4 h-4 ml-1 transition-transform duration-200 group-hover:translate-x-1"
             viewBox="0 0 16 16"
             fill="none"
-            initial={{ x: 0 }}
-            whileHover={{ x: 4 }}
           >
             <path 
               d="M6 12L10 8L6 4" 
@@ -55,9 +58,11 @@ export const ToolCard = ({ title, description, icon: Icon, onClick, delay = 0 }:
               strokeLinecap="round" 
               strokeLinejoin="round"
             />
-          </motion.svg>
+          </svg>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
-};
+});
+
+ToolCard.displayName = 'ToolCard';

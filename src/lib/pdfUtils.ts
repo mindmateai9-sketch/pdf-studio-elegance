@@ -1,8 +1,21 @@
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { getCachedPreviews, setCachedPreviews } from './pdfCache';
 
 // Set up PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+// Performance constants
+const MAX_CANVAS_WIDTH_MOBILE = 1100;
+const MAX_CANVAS_WIDTH_DESKTOP = 1400;
+const PREVIEW_SCALE = 0.3;
+const PREVIEW_QUALITY = 0.6;
+
+// Detect mobile for canvas sizing
+const isMobileDevice = () => 
+  typeof window !== 'undefined' && 
+  (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+   window.innerWidth < 768);
 
 export async function getPdfPageCount(file: File): Promise<number> {
   const arrayBuffer = await file.arrayBuffer();
@@ -10,32 +23,70 @@ export async function getPdfPageCount(file: File): Promise<number> {
   return pdfDoc.getPageCount();
 }
 
+// Reusable canvas to avoid reallocation
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedContext: CanvasRenderingContext2D | null = null;
+
+function getSharedCanvas(): { canvas: HTMLCanvasElement; context: CanvasRenderingContext2D } {
+  if (!sharedCanvas) {
+    sharedCanvas = document.createElement('canvas');
+    sharedContext = sharedCanvas.getContext('2d')!;
+  }
+  return { canvas: sharedCanvas, context: sharedContext! };
+}
+
 export async function generatePagePreviews(
   file: File,
   maxPages: number = 10
 ): Promise<string[]> {
+  // Check cache first - render once and reuse
+  const cached = getCachedPreviews(file);
+  if (cached && cached.length >= Math.min(maxPages, cached.length)) {
+    return cached.slice(0, maxPages);
+  }
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const previews: string[] = [];
-
     const pagesToRender = Math.min(pdf.numPages, maxPages);
+    
+    // Get max canvas width based on device
+    const maxWidth = isMobileDevice() ? MAX_CANVAS_WIDTH_MOBILE : MAX_CANVAS_WIDTH_DESKTOP;
+    
+    // Use shared canvas to avoid reallocation
+    const { canvas, context } = getSharedCanvas();
 
     for (let i = 1; i <= pagesToRender; i++) {
       const page = await pdf.getPage(i);
-      const scale = 0.3;
-      const viewport = page.getViewport({ scale });
+      const viewport = page.getViewport({ scale: PREVIEW_SCALE });
+      
+      // Cap canvas size for performance
+      const scaledWidth = Math.min(viewport.width, maxWidth * PREVIEW_SCALE);
+      const aspectRatio = viewport.height / viewport.width;
+      const scaledHeight = scaledWidth * aspectRatio;
+      
+      canvas.width = scaledWidth;
+      canvas.height = scaledHeight;
+      
+      // Clear canvas before rendering
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Use image-based rendering (not vector) for mobile performance
+      await page.render({ 
+        canvasContext: context, 
+        viewport: page.getViewport({ 
+          scale: scaledWidth / viewport.width * PREVIEW_SCALE 
+        })
+      }).promise;
 
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      const context = canvas.getContext('2d')!;
-      await page.render({ canvasContext: context, viewport }).promise;
-
-      previews.push(canvas.toDataURL('image/jpeg', 0.6));
+      // Convert to JPEG for smaller size
+      previews.push(canvas.toDataURL('image/jpeg', PREVIEW_QUALITY));
     }
 
+    // Cache the results
+    setCachedPreviews(file, previews);
+    
     return previews;
   } catch (error) {
     console.error('Error generating previews:', error);
