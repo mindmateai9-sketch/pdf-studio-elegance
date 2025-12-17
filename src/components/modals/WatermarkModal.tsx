@@ -273,17 +273,17 @@ export const WatermarkModal = () => {
               exit={{ opacity: 0, height: 0 }}
               className="space-y-4"
             >
-              <div className="flex gap-2">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 <input
                   type="text"
                   value={rangeInput}
                   onChange={handleRangeChange}
                   placeholder="e.g., 1-5, 9, 11-13"
-                  className="flex-1 px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+                  className="flex-1 min-w-[150px] px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
                 />
                 <motion.button
                   onClick={selectAll}
-                  className="px-4 py-3 rounded-xl text-sm font-medium bg-secondary/50 border border-border hover:border-primary/30 transition-colors"
+                  className="flex-shrink-0 px-4 py-3 rounded-xl text-sm font-medium bg-secondary/50 border border-border hover:border-primary/30 transition-colors whitespace-nowrap"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
