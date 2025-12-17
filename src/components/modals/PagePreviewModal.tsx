@@ -191,7 +191,7 @@ export const PagePreviewModal = memo(({
           </div>
 
           {/* Keyboard hints - hidden on mobile */}
-          <div className="mt-4 hidden md:flex items-center gap-4 text-xs text-muted-foreground">
+          <div className="mt-4 hidden lg:flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <kbd className="px-2 py-1 rounded bg-secondary border border-border">←</kbd>
               <kbd className="px-2 py-1 rounded bg-secondary border border-border">→</kbd>
